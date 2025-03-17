@@ -10,6 +10,12 @@ import Button from '../../components/Button';
 import { WeekDays, ClassDetails, WeekSchedule } from '../../types/schedule';
 import { createWeekSchedule } from '../../utils/schedule';
 
+const Container = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+`;
+
 const Card = styled.div<{ clickable?: boolean }>`
   background-color: #111111;
   border-radius: 12px;
@@ -469,7 +475,11 @@ const ClassesSchedule = () => {
     );
   };
 
-  return selectedClass ? renderClassDetails() : renderSchedule();
+  return (
+    <Container>
+      {selectedClass ? renderClassDetails() : renderSchedule()}
+    </Container>
+  );
 };
 
 export default ClassesSchedule; 
