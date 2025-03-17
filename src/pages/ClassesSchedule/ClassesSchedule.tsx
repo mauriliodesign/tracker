@@ -109,7 +109,7 @@ const getBeltColor = (belt: string) => {
 const ClassDetailsContainer = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 2rem;
+  gap: 1.5rem;
 `;
 
 const ClassHeader = styled.div`
@@ -122,9 +122,6 @@ const ClassHeader = styled.div`
 const ClassTime = styled.div`
   color: #a3a3a3;
   font-size: 0.875rem;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
 `;
 
 const SectionTitle = styled.h2`
@@ -148,14 +145,6 @@ const ClassStatus = styled.div<{ $status: 'scheduled' | 'available' }>`
   color: ${props => props.$status === 'scheduled' ? '#2563eb' : '#22c55e'};
 `;
 
-const ClassDetails = styled.div`
-  display: flex;
-  gap: 0.5rem;
-  color: #a3a3a3;
-  font-size: 0.875rem;
-  margin-top: 0.5rem;
-`;
-
 const ClassCard = styled.div<{ $isSelected?: boolean }>`
   background-color: ${props => props.$isSelected ? 'rgba(37, 99, 235, 0.1)' : 'rgba(30, 30, 30, 0.5)'};
   border-radius: 1rem;
@@ -169,29 +158,79 @@ const ClassCard = styled.div<{ $isSelected?: boolean }>`
   }
 `;
 
+const CheckInStatus = styled.div<{ $status: 'available' | 'not_available' | 'expired' }>`
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  background-color: ${props => {
+    switch (props.$status) {
+      case 'available': return 'rgba(34, 197, 94, 0.1)';
+      case 'not_available': return 'rgba(234, 179, 8, 0.1)';
+      case 'expired': return 'rgba(239, 68, 68, 0.1)';
+    }
+  }};
+  color: ${props => {
+    switch (props.$status) {
+      case 'available': return '#22c55e';
+      case 'not_available': return '#eab308';
+      case 'expired': return '#ef4444';
+    }
+  }};
+`;
+
+interface ExtendedClassDetails {
+  id: string;
+  name: string;
+  time: string;
+  instructor: string;
+  duration: string;
+  status: 'scheduled' | 'available';
+  type: string;
+  description: string;
+  capacity: number;
+  enrolledStudents: number;
+  students?: Array<{
+    id: string;
+    name: string;
+    belt: string;
+    stripes: number;
+  }>;
+}
+
 const ClassesSchedule: React.FC = () => {
   const [searchParams] = useSearchParams();
-  const [selectedClass, setSelectedClass] = useState<string | null>(null);
+  const [selectedClass, setSelectedClass] = useState<ClassDetails | null>(null);
   const [weekIndex, setWeekIndex] = useState(0);
   const [selectedDay, setSelectedDay] = useState<string | null>(null);
   const [weekScheduleState, setWeekScheduleState] = useState<WeekSchedule>(createWeekSchedule(0));
   const userName = "João Silva";
   const userBelt = "azul";
   const userStripes: number = 2;
+  const navigate = useNavigate();
 
   useEffect(() => {
     const classId = searchParams.get('class');
     if (classId) {
-      setSelectedClass(classId);
-      // Scroll to the class card after a short delay to ensure the DOM is ready
-      setTimeout(() => {
-        const element = document.getElementById(`class-${classId}`);
-        if (element) {
-          element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      // Encontrar a aula em todos os dias da semana
+      for (const dayKey of Object.keys(WeekDays)) {
+        const daySchedule = weekScheduleState.days[dayKey as keyof typeof WeekDays];
+        const foundClass = daySchedule.classes.find(c => c.id === classId);
+        if (foundClass) {
+          setSelectedClass(foundClass);
+          setSelectedDay(dayKey as keyof typeof WeekDays);
+          // Scroll to the class card after a short delay to ensure the DOM is ready
+          setTimeout(() => {
+            const element = document.getElementById(`class-${classId}`);
+            if (element) {
+              element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+          }, 100);
+          break;
         }
-      }, 100);
+      }
     }
-  }, [searchParams]);
+  }, [searchParams, weekScheduleState]);
 
   // Atualiza o cronograma quando o índice da semana muda
   useEffect(() => {
@@ -217,7 +256,7 @@ const ClassesSchedule: React.FC = () => {
     setSelectedDay(currentDayKey);
   }, []);
 
-  const handleEnrollment = (classItem: ClassDetails) => {
+  const handleEnrollment = (classItem: ExtendedClassDetails) => {
     if (!selectedClass) return;
 
     const isEnrolled = classItem.students?.some(student => student.name === userName);
@@ -230,9 +269,6 @@ const ClassesSchedule: React.FC = () => {
         students: updatedStudents,
         enrolledStudents: classItem.enrolledStudents - 1
       };
-      
-      // Atualizar a classe selecionada
-      setSelectedClass(null);
       
       // Atualizar a classe na lista de classes do dia
       if (selectedDay !== null) {
@@ -251,6 +287,9 @@ const ClassesSchedule: React.FC = () => {
             }
           }
         }));
+
+        // Atualizar a classe selecionada com os novos dados
+        setSelectedClass(updatedClass);
       }
     } else {
       // Realizar inscrição
@@ -273,9 +312,6 @@ const ClassesSchedule: React.FC = () => {
         enrolledStudents: classItem.enrolledStudents + 1
       };
 
-      // Atualizar a classe selecionada
-      setSelectedClass(null);
-
       // Atualizar a classe na lista de classes do dia
       if (selectedDay !== null) {
         const dayKey = selectedDay as keyof typeof WeekDays;
@@ -293,15 +329,53 @@ const ClassesSchedule: React.FC = () => {
             }
           }
         }));
+
+        // Atualizar a classe selecionada com os novos dados
+        setSelectedClass(updatedClass);
       }
     }
+  };
+
+  const handleEnroll = (classItem: ExtendedClassDetails) => {
+    // ... existing code ...
+  };
+
+  const isCheckInAvailable = (classTime: string): 'available' | 'not_available' | 'expired' => {
+    const now = new Date();
+    const [hours, minutes] = classTime.split(':').map(Number);
+    const classDate = new Date();
+    classDate.setHours(hours, minutes, 0, 0);
+
+    const fifteenMinutesBefore = new Date(classDate.getTime() - 15 * 60000);
+    const fifteenMinutesAfter = new Date(classDate.getTime() + 15 * 60000);
+
+    if (now < fifteenMinutesBefore) {
+      return 'not_available';
+    }
+
+    if (now > fifteenMinutesAfter) {
+      return 'expired';
+    }
+
+    return 'available';
   };
 
   const renderClassDetails = () => {
     if (!selectedClass) return null;
 
-    const isEnrolled = weekScheduleState.days[selectedDay as keyof typeof WeekDays].classes.some(c => c.id === selectedClass);
-    const isFull = weekScheduleState.days[selectedDay as keyof typeof WeekDays].classes.some(c => c.enrolledStudents >= c.capacity);
+    const selectedClassItem = weekScheduleState.days[selectedDay as keyof typeof WeekDays].classes.find(c => c.id === selectedClass.id);
+    if (!selectedClassItem) return null;
+
+    const isEnrolled = selectedClassItem.students?.some(student => student.name === userName);
+    const isFull = selectedClassItem.enrolledStudents >= selectedClassItem.capacity;
+    const checkInStatus = isCheckInAvailable(selectedClassItem.time);
+
+    const handleCheckIn = () => {
+      if (checkInStatus !== 'available') return;
+      
+      // Aqui você pode adicionar a lógica para registrar o check-in
+      alert('Check-in realizado com sucesso!');
+    };
 
     return (
       <ClassDetailsContainer>
@@ -315,13 +389,13 @@ const ClassesSchedule: React.FC = () => {
           </ClassHeader>
 
           <ClassTime>
-            {weekScheduleState.days[selectedDay as keyof typeof WeekDays].classes.find(c => c.id === selectedClass)?.time} • 60 minutos • {weekScheduleState.days[selectedDay as keyof typeof WeekDays].classes.find(c => c.id === selectedClass)?.instructor}
+            {selectedClassItem.time} • 60 minutos • {selectedClassItem.instructor}
           </ClassTime>
         </div>
 
         <Card>
           <SectionTitle>Sobre a Aula</SectionTitle>
-          <p style={{ color: '#a3a3a3', marginBottom: '1.5rem' }}>{weekScheduleState.days[selectedDay as keyof typeof WeekDays].classes.find(c => c.id === selectedClass)?.description}</p>
+          <p style={{ color: '#a3a3a3', marginBottom: '1.5rem' }}>{selectedClassItem.description}</p>
           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               <svg 
@@ -342,16 +416,23 @@ const ClassesSchedule: React.FC = () => {
                 <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
               </svg>
               <span style={{ color: '#a3a3a3', fontSize: '0.875rem' }}>
-                {weekScheduleState.days[selectedDay as keyof typeof WeekDays].classes.find(c => c.id === selectedClass)?.enrolledStudents}/{weekScheduleState.days[selectedDay as keyof typeof WeekDays].classes.find(c => c.id === selectedClass)?.capacity} alunos
+                {selectedClassItem.enrolledStudents}/{selectedClassItem.capacity} alunos
               </span>
             </div>
+            {isEnrolled && (
+              <CheckInStatus $status={checkInStatus}>
+                {checkInStatus === 'available' && 'Check-in disponível'}
+                {checkInStatus === 'not_available' && 'Check-in em breve'}
+                {checkInStatus === 'expired' && 'Check-in expirado'}
+              </CheckInStatus>
+            )}
           </div>
         </Card>
 
         <Card>
           <SectionTitle>Alunos Inscritos</SectionTitle>
           <div className="space-y-4">
-            {weekScheduleState.days[selectedDay as keyof typeof WeekDays].classes.find(c => c.id === selectedClass)?.students?.map((student, index) => (
+            {selectedClassItem.students?.map((student, index) => (
               <div 
                 key={student.id}
                 className="p-4 rounded-xl bg-[rgba(30,30,30,0.5)] flex items-center justify-between"
@@ -374,13 +455,25 @@ const ClassesSchedule: React.FC = () => {
           </div>
         </Card>
 
-        <Button
-          onClick={() => handleEnrollment(weekScheduleState.days[selectedDay as keyof typeof WeekDays].classes.find(c => c.id === selectedClass) as ClassDetails)}
-          disabled={!isEnrolled && isFull}
-          variant={isEnrolled ? 'muted' : 'primary'}
-        >
-          {isEnrolled ? 'Cancelar Inscrição' : isFull ? 'Turma Lotada' : 'Inscrever-se'}
-        </Button>
+        <div className="space-y-4">
+          <Button
+            onClick={() => handleEnrollment(selectedClassItem as ExtendedClassDetails)}
+            disabled={!isEnrolled && isFull}
+            variant={isEnrolled ? 'muted' : 'primary'}
+            fullWidth
+          >
+            {isEnrolled ? 'Cancelar Inscrição' : isFull ? 'Turma Lotada' : 'Inscrever-se'}
+          </Button>
+          {isEnrolled && checkInStatus === 'available' && (
+            <Button
+              onClick={handleCheckIn}
+              variant="primary"
+              fullWidth
+            >
+              Fazer Check-in
+            </Button>
+          )}
+        </div>
       </ClassDetailsContainer>
     );
   };
@@ -473,35 +566,34 @@ const ClassesSchedule: React.FC = () => {
         {selectedDay !== null && (
           <Card>
             <div className="space-y-4">
-              {weekScheduleState.days[selectedDay as keyof typeof WeekDays].classes.map((classItem: ClassDetails) => (
-                <ClassCard
+              {weekScheduleState.days[selectedDay as keyof typeof WeekDays].classes.map((classItem) => (
+                <div
                   key={classItem.id}
-                  $isSelected={selectedClass === classItem.id}
-                  onClick={() => setSelectedClass(classItem.id)}
+                  id={`class-${classItem.id}`}
+                  onClick={() => setSelectedClass(classItem)}
+                  className="p-4 rounded-xl bg-[rgba(30,30,30,0.5)] hover:bg-[rgba(30,30,30,0.7)] cursor-pointer"
                 >
-                  <ClassHeader>
+                  <div className="flex items-center justify-between">
                     <div>
-                      <ClassName>{classItem.name}</ClassName>
-                      <ClassTime>{classItem.time}</ClassTime>
+                      <div className="font-medium">{classItem.name}</div>
+                      <div className="text-sm text-gray-400">
+                        {classItem.time} - {classItem.instructor}
+                      </div>
                     </div>
-                    <ClassStatus $status={classItem.status}>
-                      {classItem.status === 'scheduled' ? 'Agendada' : 'Disponível'}
-                    </ClassStatus>
-                  </ClassHeader>
-                  <ClassDetails>
-                    <span>{classItem.instructor}</span>
-                    <span>•</span>
-                    <span>{classItem.duration}</span>
-                  </ClassDetails>
-                  {classItem.status === 'available' && (
-                    <Button variant="primary" onClick={(e) => {
-                      e.stopPropagation();
-                      handleEnrollment(classItem);
-                    }}>
-                      Matricular
-                    </Button>
-                  )}
-                </ClassCard>
+                    <div className="flex items-center space-x-2">
+                      <div className="text-sm text-gray-400">
+                        {classItem.enrolledStudents}/{classItem.capacity}
+                      </div>
+                      <div className={`w-2 h-2 rounded-full ${
+                        classItem.enrolledStudents >= classItem.capacity 
+                          ? 'bg-red-500' 
+                          : classItem.enrolledStudents >= classItem.capacity * 0.8
+                          ? 'bg-yellow-500'
+                          : 'bg-green-500'
+                      }`} />
+                    </div>
+                  </div>
+                </div>
               ))}
             </div>
           </Card>
