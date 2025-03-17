@@ -3,6 +3,7 @@
 /** @jsxFrag React.Fragment */
 import { jsx } from '@emotion/react';
 import React, { useState, useEffect } from 'react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { ArrowLeft, Sun, Moon, ChevronLeft, ChevronRight } from 'lucide-react';
 import styled from '@emotion/styled';
 
@@ -904,80 +905,22 @@ const Navigation = styled.nav`
   border-bottom: 1px solid #222222;
 `;
 
-const Button = styled.button<{ active?: boolean }>`
+const NavLinks = styled.div`
+  display: flex;
+  gap: 1rem;
+`;
+
+const NavLink = styled(Link)<{ $active?: boolean }>`
+  color: ${props => props.$active ? '#ffffff' : '#a3a3a3'};
+  text-decoration: none;
   padding: 0.5rem 1rem;
   border-radius: 0.5rem;
-  background-color: ${props => props.active ? '#2563eb' : 'transparent'};
-  color: ${props => props.active ? '#ffffff' : '#a3a3a3'};
   transition: all 0.2s ease-in-out;
+  background-color: ${props => props.$active ? '#2563eb' : 'transparent'};
+
   &:hover {
-    background-color: ${props => props.active ? '#2563eb' : '#1e1e1e'};
+    background-color: ${props => props.$active ? '#2563eb' : '#1e1e1e'};
     color: #ffffff;
-  }
-`;
-
-const IconButton = styled(Button)`
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 2.5rem;
-  height: 2.5rem;
-  padding: 0.5rem;
-  border-radius: 9999px;
-  background-color: #1e1e1e;
-  
-  &:hover {
-    background-color: #2d2d2d;
-  }
-
-  svg {
-    width: 1.25rem;
-    height: 1.25rem;
-    color: #ffffff;
-  }
-`;
-
-const Card = styled.div<{ clickable?: boolean }>`
-  background-color: #111111;
-  border-radius: 12px;
-  padding: 1.25rem;
-  transition: all 0.2s ease-in-out;
-  border: 1px solid #222222;
-
-  ${props => props.clickable && `
-    cursor: pointer;
-    
-    &:hover {
-      transform: translateY(-2px);
-      background-color: #161616;
-    }
-
-    &:active {
-      transform: translateY(0);
-    }
-  `}
-`;
-
-const CompletionBadge = styled.div<{ completed: boolean }>`
-  display: inline-flex;
-  align-items: center;
-  padding: 0.25rem 0.75rem;
-  border-radius: 9999px;
-  font-size: 0.875rem;
-  color: ${props => props.completed ? '#10B981' : '#6B7280'};
-  background-color: ${props => props.completed ? 'rgba(16, 185, 129, 0.1)' : 'rgba(107, 114, 128, 0.1)'};
-`;
-
-const WeekDayCard = styled(Card)<{ completed?: boolean }>`
-  position: relative;
-  overflow: hidden;
-  padding: 1.25rem;
-  border: 1px solid ${props => props.completed ? '#10B981' : '#222222'};
-  transition: all 0.3s ease-in-out;
-  border-radius: 12px;
-
-  &:hover {
-    background-color: #161616;
   }
 `;
 
@@ -999,11 +942,11 @@ const Avatar = styled.button`
 `;
 
 interface SelectedExercise {
-  name: string;
   weekIndex: number;
   trainingType: string;
   sectionIndex: number;
   exerciseIndex: number;
+  exercise: Exercise;
 }
 
 const weekMappings: { [key: number]: string } = {
@@ -1103,14 +1046,110 @@ const exerciseVideos: ExerciseVideoMapping = {
   }
 };
 
+const Button = styled.button<{ active?: boolean }>`
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  background-color: ${props => props.active ? '#2563eb' : 'transparent'};
+  color: ${props => props.active ? '#ffffff' : '#a3a3a3'};
+  transition: all 0.2s ease-in-out;
+  &:hover {
+    background-color: ${props => props.active ? '#2563eb' : '#1e1e1e'};
+    color: #ffffff;
+  }
+`;
+
+const IconButton = styled(Button)`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  padding: 0.5rem;
+  border-radius: 9999px;
+  background-color: #1e1e1e;
+  
+  &:hover {
+    background-color: #2d2d2d;
+  }
+
+  svg {
+    width: 1.25rem;
+    height: 1.25rem;
+    color: #ffffff;
+  }
+`;
+
+const Card = styled.div<{ clickable?: boolean }>`
+  background-color: #111111;
+  border-radius: 12px;
+  padding: 1.25rem;
+  transition: all 0.2s ease-in-out;
+  border: 1px solid #222222;
+
+  ${props => props.clickable && `
+    cursor: pointer;
+    
+    &:hover {
+      transform: translateY(-2px);
+      background-color: #161616;
+    }
+
+    &:active {
+      transform: translateY(0);
+    }
+  `}
+`;
+
+const CompletionBadge = styled.div<{ completed: boolean; isBlocked?: boolean }>`
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.875rem;
+  color: ${props => {
+    if (props.completed) return '#10B981';
+    if (props.isBlocked) return '#94A3B8';
+    return '#22C55E';
+  }};
+  background-color: ${props => {
+    if (props.completed) return 'rgba(16, 185, 129, 0.1)';
+    if (props.isBlocked) return 'rgba(148, 163, 184, 0.1)';
+    return 'rgba(34, 197, 94, 0.1)';
+  }};
+
+  svg {
+    width: 1rem;
+    height: 1rem;
+  }
+`;
+
+const WeekDayCard = styled(Card)<{ completed?: boolean }>`
+  position: relative;
+  overflow: hidden;
+  padding: 1.25rem;
+  border: 1px solid ${props => props.completed ? '#10B981' : '#222222'};
+  transition: all 0.3s ease-in-out;
+  border-radius: 12px;
+
+  &:hover {
+    background-color: #161616;
+  }
+`;
+
 const JiuJitsuTrackerStatsPreview = () => {
-  const [activeTab, setActiveTab] = useState('trainings');
+  const location = useLocation();
+  const [activeTab, setActiveTab] = useState(() => {
+    const path = location.pathname.substring(1);
+    return path || 'treinos';
+  });
   const [selectedTraining, setSelectedTraining] = useState<string | null>(null);
   const [selectedDay, setSelectedDay] = useState<number | null>(null);
   const [currentWeekIndex, setCurrentWeekIndex] = useState(0);
   const [showProfile, setShowProfile] = useState(false);
   const [selectedExercise, setSelectedExercise] = useState<SelectedExercise | null>(null);
   const userName = "João Silva";
+  const navigate = useNavigate();
 
   // Inicializar o programa com dados do localStorage ou usar o padrão
   const [program, setProgram] = useState<Week[]>(() => {
@@ -1133,12 +1172,27 @@ const JiuJitsuTrackerStatsPreview = () => {
     exerciseIndex: number
   ) => {
     setProgram(prevProgram => {
-      const updatedProgram = [...prevProgram];
+      const updatedProgram = JSON.parse(JSON.stringify(prevProgram));
       const exercise = updatedProgram[weekIndex].trainings[trainingType].sections[sectionIndex].exercises[exerciseIndex];
       exercise.completed = !exercise.completed;
       
       // Salvar o progresso atualizado no localStorage
       localStorage.setItem('trainingProgress', JSON.stringify(updatedProgram));
+      
+      // Atualizar o estado do exercício selecionado se estiver na mesma página
+      if (selectedExercise && 
+          selectedExercise.weekIndex === weekIndex && 
+          selectedExercise.trainingType === trainingType && 
+          selectedExercise.sectionIndex === sectionIndex && 
+          selectedExercise.exerciseIndex === exerciseIndex) {
+        setSelectedExercise({
+          ...selectedExercise,
+          exercise: {
+            ...selectedExercise.exercise,
+            completed: exercise.completed
+          }
+        });
+      }
       
       return updatedProgram;
     });
@@ -1405,7 +1459,7 @@ const JiuJitsuTrackerStatsPreview = () => {
         <div className="flex items-center mb-8">
           <Button 
             onClick={() => {
-              setActiveTab('trainings');
+              setActiveTab('treinos');
               setShowProfile(false);
             }}
             className="mr-4"
@@ -1475,18 +1529,21 @@ const JiuJitsuTrackerStatsPreview = () => {
       .sections[selectedExercise.sectionIndex]
       .exercises[selectedExercise.exerciseIndex];
 
-    const videoUrl = getVideoUrl();
+    const videoUrl = getVideoUrl(exercise.name);
     const embedUrl = getEmbedUrl(videoUrl);
+
+    // Verificar se é o dia atual
+    const isCurrentDay = selectedDay === 0;
 
     return (
       <div className="p-4">
         <div className="mb-6 flex items-center">
-          <Button 
+          <button
             onClick={() => setSelectedExercise(null)}
-            className="mr-4"
+            className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
           >
-            <ArrowLeft size={20} />
-          </Button>
+            <ArrowLeft className="w-6 h-6" />
+          </button>
           <h1 className="text-2xl font-bold">{exercise.name}</h1>
         </div>
 
@@ -1537,37 +1594,70 @@ const JiuJitsuTrackerStatsPreview = () => {
           </Card>
 
           <Card>
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold">Status</h2>
-              <CompletionBadge completed={exercise.completed}>
-                {exercise.completed ? 'Concluído' : 'Pendente'}
+            <div className="flex items-center space-x-2">
+              <CompletionBadge completed={exercise.completed} isBlocked={selectedDay !== 0}>
+                {selectedDay !== 0 ? (
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                    <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                  </svg>
+                ) : (
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                    <path d="M7 11V7a5 5 0 0 1 9.9-1" />
+                  </svg>
+                )}
+                {exercise.completed 
+                  ? 'Concluído' 
+                  : selectedDay === 0 
+                    ? 'Liberado' 
+                    : 'Bloqueado'}
               </CompletionBadge>
             </div>
             <Button
               onClick={() => {
-                toggleExerciseCompletion(
-                  selectedExercise.weekIndex,
-                  selectedExercise.trainingType,
-                  selectedExercise.sectionIndex,
-                  selectedExercise.exerciseIndex
-                );
+                if (isCurrentDay) {
+                  toggleExerciseCompletion(
+                    selectedExercise.weekIndex,
+                    selectedExercise.trainingType,
+                    selectedExercise.sectionIndex,
+                    selectedExercise.exerciseIndex
+                  );
+                }
               }}
               className={`
                 w-full py-3 mt-4 rounded-lg font-medium transition-all duration-300
                 flex items-center justify-center space-x-2
-                ${exercise.completed 
-                  ? 'bg-green-600 hover:bg-green-700 text-white ring-1 ring-green-500'
-                  : 'bg-blue-600 hover:bg-blue-700 text-white'}
+                ${!isCurrentDay ? 'bg-gray-800 text-gray-500 cursor-not-allowed' :
+                  exercise.completed 
+                    ? 'bg-gray-700 hover:bg-gray-600 text-gray-300'
+                    : 'bg-blue-600 hover:bg-blue-700 text-white'}
               `}
+              disabled={!isCurrentDay}
             >
-              <svg className="w-5 h-5 text-white stroke-2" viewBox="0 0 24 24">
+              <svg className="w-5 h-5 text-current stroke-2" viewBox="0 0 24 24">
                 <path
                   d="M20 6L9 17l-5-5"
                   className="stroke-current"
                 />
               </svg>
               <span>
-                {exercise.completed ? 'Exercício Concluído' : 'Marcar como Concluído'}
+                {!isCurrentDay ? 'Disponível apenas no dia do treino' :
+                  exercise.completed ? 'Não Concluído' : 'Marcar como Concluído'}
               </span>
             </Button>
           </Card>
@@ -1576,27 +1666,22 @@ const JiuJitsuTrackerStatsPreview = () => {
     );
   };
 
-  const getVideoUrl = (): string | null => {
+  const getVideoUrl = (exerciseName: string): string | null => {
     if (!selectedExercise) return null;
-
+    
+    console.log('Looking up video URL for exercise:', exerciseName);
     const weekKey = weekMappings[selectedExercise.weekIndex];
     const trainingKey = trainingMappings[selectedExercise.trainingType];
-
-    console.log('Looking up video with:', {
-      weekKey,
-      trainingKey,
-      exerciseName: selectedExercise.name
-    });
-
+    
     if (!weekKey || !trainingKey) return null;
-
+    
     const weekVideos = exerciseVideos[weekKey];
     if (!weekVideos) return null;
-
+    
     const trainingVideos = weekVideos[trainingKey];
     if (!trainingVideos) return null;
-
-    return trainingVideos[selectedExercise.name] || null;
+    
+    return trainingVideos[exerciseName] || null;
   };
 
   const exerciseDescriptions: { [key: string]: string } = {
@@ -1672,9 +1757,7 @@ const JiuJitsuTrackerStatsPreview = () => {
           <div className="flex justify-between items-center mb-6">
             <div className="flex items-center space-x-4">
               <h1 className="text-2xl font-bold">Semana {String(currentWeekIndex + 1).padStart(2, '0')}</h1>
-              <CompletionBadge completed={isWeekCompleted(currentWeek)}>
-                {isWeekCompleted(currentWeek) ? 'Semana Concluída' : 'Em Andamento'}
-              </CompletionBadge>
+              <div className={`w-3 h-3 rounded-full ${isWeekCompleted(currentWeek) ? 'bg-green-500' : 'bg-emerald-500'}`} />
             </div>
             <div className="flex space-x-2">
               <IconButton 
@@ -1764,10 +1847,43 @@ const JiuJitsuTrackerStatsPreview = () => {
                 <h2 className="text-lg font-semibold">
                   {currentWeek.trainings[selectedTraining].name}
                 </h2>
-                <CompletionBadge completed={isTrainingCompleted(currentWeek.trainings[selectedTraining])}>
-                  {isTrainingCompleted(currentWeek.trainings[selectedTraining]) ? 'Concluído' : 'Em Andamento'}
+                <CompletionBadge 
+                  completed={isTrainingCompleted(currentWeek.trainings[selectedTraining])}
+                  isBlocked={selectedDay !== 0}
+                >
+                  {selectedDay !== 0 ? (
+                    <svg
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                      <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                    </svg>
+                  ) : (
+                    <svg
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                      <path d="M7 11V7a5 5 0 0 1 9.9-1" />
+                    </svg>
+                  )}
+                  {isTrainingCompleted(currentWeek.trainings[selectedTraining]) 
+                    ? 'Concluído' 
+                    : selectedDay === 0 
+                      ? 'Liberado' 
+                      : 'Bloqueado'}
                 </CompletionBadge>
               </div>
+
               <div className="space-y-6">
                 {currentWeek.trainings[selectedTraining].sections.map((section, sectionIndex) => (
                   <div key={sectionIndex}>
@@ -1777,52 +1893,62 @@ const JiuJitsuTrackerStatsPreview = () => {
                       </div>
                     )}
                     <div className="space-y-2">
-                      {section.exercises.map((exercise, exerciseIndex) => (
-                        <div 
-                          key={exerciseIndex}
-                          onClick={() => {
-                            setSelectedExercise({
-                              name: exercise.name,
-                              weekIndex: currentWeekIndex,
-                              trainingType: selectedTraining,
-                              sectionIndex: sectionIndex,
-                              exerciseIndex: exerciseIndex
-                            });
-                          }}
-                          className="p-3 rounded-lg cursor-pointer flex items-center justify-between hover:bg-gray-800"
-                        >
-                          <div>
-                            <div className="font-medium">{exercise.name}</div>
-                            <div className="text-sm text-gray-400">
-                              {exercise.sets} × {exercise.reps}
-                            </div>
-                          </div>
+                      {section.exercises.map((exercise, exerciseIndex) => {
+                        const isCurrentDay = selectedDay === 0;
+                        
+                        return (
                           <div 
-                            onClick={(e: React.MouseEvent) => {
-                              e.stopPropagation();
-                              toggleExerciseCompletion(
-                                currentWeekIndex,
-                                selectedTraining,
-                                sectionIndex,
-                                exerciseIndex
-                              );
+                            key={exerciseIndex}
+                            onClick={() => {
+                              setSelectedExercise({
+                                weekIndex: currentWeekIndex,
+                                trainingType: selectedTraining,
+                                sectionIndex: sectionIndex,
+                                exerciseIndex: exerciseIndex,
+                                exercise: exercise
+                              });
                             }}
                             className={`
-                              w-5 h-5 rounded-full border-2 flex items-center justify-center
-                              transition-colors duration-200 cursor-pointer
-                              ${exercise.completed 
-                                ? 'bg-green-500 border-green-500 hover:bg-green-600' 
-                                : 'border-gray-600 hover:border-gray-400'}
+                              p-3 rounded-lg cursor-pointer flex items-center justify-between 
+                              ${isCurrentDay ? 'hover:bg-gray-800' : 'opacity-75'}
                             `}
                           >
-                            {exercise.completed && (
-                              <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
-                                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"/>
-                              </svg>
-                            )}
+                            <div>
+                              <div className="font-medium">{exercise.name}</div>
+                              <div className="text-sm text-gray-400">
+                                {exercise.sets} × {exercise.reps}
+                              </div>
+                            </div>
+                            <div 
+                              onClick={(e: React.MouseEvent) => {
+                                e.stopPropagation();
+                                if (isCurrentDay) {
+                                  toggleExerciseCompletion(
+                                    currentWeekIndex,
+                                    selectedTraining,
+                                    sectionIndex,
+                                    exerciseIndex
+                                  );
+                                }
+                              }}
+                              className={`
+                                w-5 h-5 rounded-full border-2 flex items-center justify-center
+                                transition-colors duration-200
+                                ${!isCurrentDay ? 'cursor-not-allowed border-gray-700 bg-gray-800' :
+                                  exercise.completed 
+                                    ? 'bg-green-500 border-green-500 hover:bg-green-600 cursor-pointer' 
+                                    : 'border-gray-600 hover:border-gray-400 cursor-pointer'}
+                              `}
+                            >
+                              {exercise.completed && (
+                                <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                  <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"/>
+                                </svg>
+                              )}
+                            </div>
                           </div>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   </div>
                 ))}
@@ -1837,26 +1963,38 @@ const JiuJitsuTrackerStatsPreview = () => {
   return (
     <Container>
       <Navigation>
-        <div className="flex space-x-4">
-          <Button
-            active={activeTab === 'trainings'}
+        <NavLinks>
+          <NavLink 
+            to="/aulas" 
+            $active={activeTab === 'aulas'}
             onClick={() => {
-              setActiveTab('trainings');
+              setActiveTab('aulas');
+              setShowProfile(false);
+            }}
+          >
+            Aulas
+          </NavLink>
+          <NavLink 
+            to="/treinos" 
+            $active={activeTab === 'treinos'}
+            onClick={() => {
+              setActiveTab('treinos');
               setShowProfile(false);
             }}
           >
             Treinos
-          </Button>
-          <Button
-            active={activeTab === 'stats'}
+          </NavLink>
+          <NavLink 
+            to="/estatisticas" 
+            $active={activeTab === 'estatisticas'}
             onClick={() => {
-              setActiveTab('stats');
+              setActiveTab('estatisticas');
               setShowProfile(false);
             }}
           >
             Estatísticas
-          </Button>
-        </div>
+          </NavLink>
+        </NavLinks>
         <Avatar 
           onClick={() => {
             setShowProfile(true);
@@ -1871,7 +2009,9 @@ const JiuJitsuTrackerStatsPreview = () => {
           ? renderProfile() 
           : selectedExercise
           ? renderExerciseDetails()
-          : (activeTab === 'trainings' ? renderTrainings() : renderStats())}
+          : activeTab === 'estatisticas'
+          ? renderStats()
+          : renderTrainings()}
       </main>
     </Container>
   );
