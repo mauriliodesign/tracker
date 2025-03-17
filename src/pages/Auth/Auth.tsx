@@ -1,18 +1,93 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from '@emotion/styled';
+import { useAuthContext } from '../../contexts/AuthContext';
 
 const Container = styled.div`
   min-height: 100vh;
   background-color: #0a0a0a;
   color: #ffffff;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+  }
+`;
+
+const BrandSection = styled.div`
+  background-color: #111111;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 1.5rem;
-  background-image: 
-    radial-gradient(circle at 100% 100%, rgba(37, 99, 235, 0.1) 0%, transparent 50%),
-    radial-gradient(circle at 0% 0%, rgba(37, 99, 235, 0.05) 0%, transparent 50%);
+  padding: 2rem;
+  position: relative;
+  overflow: hidden;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: 
+      radial-gradient(circle at 100% 100%, rgba(37, 99, 235, 0.1) 0%, transparent 50%),
+      radial-gradient(circle at 0% 0%, rgba(37, 99, 235, 0.05) 0%, transparent 50%);
+    pointer-events: none;
+  }
+
+  @media (max-width: 768px) {
+    padding: 3rem 2rem;
+  }
+`;
+
+const Logo = styled.h1`
+  font-size: 3rem;
+  font-weight: 800;
+  color: #ffffff;
+  letter-spacing: -0.025em;
+  margin-bottom: 1rem;
+  position: relative;
+  z-index: 1;
+`;
+
+const BrandText = styled.p`
+  color: #a3a3a3;
+  text-align: center;
+  max-width: 24rem;
+  line-height: 1.5;
+  position: relative;
+  z-index: 1;
+`;
+
+const FormSection = styled.div`
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 3rem;
+  background-color: #0a0a0a;
+
+  @media (max-width: 768px) {
+    padding: 2rem;
+  }
+`;
+
+const FormHeader = styled.div`
+  margin-bottom: 2rem;
+`;
+
+const FormTitle = styled.h2`
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #ffffff;
+  margin-bottom: 0.5rem;
+`;
+
+const FormDescription = styled.p`
+  color: #a3a3a3;
+  font-size: 0.875rem;
 `;
 
 const Card = styled.div`
@@ -29,13 +104,6 @@ const Card = styled.div`
 const CardHeader = styled.div`
   padding: 2rem 1.5rem;
   text-align: center;
-`;
-
-const Logo = styled.h1`
-  font-size: 2.25rem;
-  font-weight: 800;
-  color: #ffffff;
-  letter-spacing: -0.025em;
 `;
 
 const TabContainer = styled.div`
@@ -233,8 +301,10 @@ const ErrorIcon = () => (
 
 const Auth: React.FC = () => {
   const navigate = useNavigate();
+  const { login, loginWithGoogle, signup } = useAuthContext();
   const [activeTab, setActiveTab] = useState<'login' | 'signup'>('login');
   const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   const [loginForm, setLoginForm] = useState({
     email: '',
@@ -245,188 +315,205 @@ const Auth: React.FC = () => {
     name: '',
     email: '',
     password: '',
-    confirmPassword: '',
-    belt: 'branca',
-    stripes: '0'
+    confirmPassword: ''
   });
 
-  const handleGoogleLogin = () => {
-    // Implementar lógica de login com Google
-    navigate('/aulas');
+  const handleGoogleLogin = async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      await loginWithGoogle();
+      navigate('/aulas');
+    } catch (err) {
+      setError('Erro ao fazer login com Google');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const handleLoginSubmit = (e: React.FormEvent) => {
+  const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Implementar lógica de login
-    navigate('/aulas');
+    try {
+      setIsLoading(true);
+      setError(null);
+      await login(loginForm.email, loginForm.password);
+      navigate('/aulas');
+    } catch (err) {
+      setError('Email ou senha inválidos');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const handleSignupSubmit = (e: React.FormEvent) => {
+  const handleSignupSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (signupForm.password !== signupForm.confirmPassword) {
       setError('As senhas não coincidem');
       return;
     }
-    // Implementar lógica de cadastro
-    navigate('/aulas');
+    try {
+      setIsLoading(true);
+      setError(null);
+      await signup(signupForm.name, signupForm.email, signupForm.password);
+      navigate('/aulas');
+    } catch (err) {
+      setError('Erro ao criar conta');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
     <Container>
-      <Card>
-        <CardHeader>
-          <Logo>Fightbox</Logo>
-        </CardHeader>
+      <BrandSection>
+        <Logo>Fightbox</Logo>
+        <BrandText>
+          Gerencie seus treinos, acompanhe sua evolução e conecte-se com a comunidade do Jiu-Jitsu.
+        </BrandText>
+      </BrandSection>
 
-        <TabContainer>
-          <Tab 
-            $active={activeTab === 'login'} 
-            onClick={() => setActiveTab('login')}
-          >
-            Login
-          </Tab>
-          <Tab 
-            $active={activeTab === 'signup'} 
-            onClick={() => setActiveTab('signup')}
-          >
-            Cadastro
-          </Tab>
-        </TabContainer>
+      <FormSection>
+        <FormHeader>
+          <FormTitle>
+            {activeTab === 'login' ? 'Bem-vindo de volta' : 'Crie sua conta'}
+          </FormTitle>
+          <FormDescription>
+            {activeTab === 'login' 
+              ? 'Entre com sua conta para continuar'
+              : 'Comece sua jornada no Jiu-Jitsu'}
+          </FormDescription>
+        </FormHeader>
 
-        {activeTab === 'login' ? (
-          <Form onSubmit={handleLoginSubmit}>
-            <GoogleButton type="button" onClick={handleGoogleLogin}>
-              <GoogleIcon />
-              Continuar com Google
-            </GoogleButton>
+        <div>
+          <GoogleButton type="button" onClick={handleGoogleLogin}>
+            <GoogleIcon />
+            {activeTab === 'login' ? 'Continuar com Google' : 'Cadastrar com Google'}
+          </GoogleButton>
 
-            <Divider>
-              <span>ou</span>
-            </Divider>
+          <Divider>
+            <span>ou</span>
+          </Divider>
 
-            <FormGroup>
-              <Label htmlFor="login-email">E-mail</Label>
-              <Input
-                id="login-email"
-                type="email"
-                placeholder="seu@email.com"
-                value={loginForm.email}
-                onChange={(e) => setLoginForm({ ...loginForm, email: e.target.value })}
-                required
-              />
-            </FormGroup>
-            <FormGroup>
-              <Label htmlFor="login-password">Senha</Label>
-              <Input
-                id="login-password"
-                type="password"
-                placeholder="••••••••"
-                value={loginForm.password}
-                onChange={(e) => setLoginForm({ ...loginForm, password: e.target.value })}
-                required
-              />
-            </FormGroup>
-            <Button type="submit">
-              Entrar
-            </Button>
-          </Form>
-        ) : (
-          <Form onSubmit={handleSignupSubmit}>
-            <GoogleButton type="button" onClick={handleGoogleLogin}>
-              <GoogleIcon />
-              Cadastrar com Google
-            </GoogleButton>
+          {activeTab === 'login' ? (
+            <form onSubmit={handleLoginSubmit}>
+              <FormGroup>
+                <Label htmlFor="login-email">E-mail</Label>
+                <Input
+                  id="login-email"
+                  type="email"
+                  placeholder="seu@email.com"
+                  value={loginForm.email}
+                  onChange={(e) => setLoginForm({ ...loginForm, email: e.target.value })}
+                  required
+                />
+              </FormGroup>
+              <FormGroup>
+                <Label htmlFor="login-password">Senha</Label>
+                <Input
+                  id="login-password"
+                  type="password"
+                  placeholder="••••••••"
+                  value={loginForm.password}
+                  onChange={(e) => setLoginForm({ ...loginForm, password: e.target.value })}
+                  required
+                />
+                <div style={{ marginTop: '0.5rem', textAlign: 'right' }}>
+                  <button
+                    type="button"
+                    onClick={() => navigate('/reset-password')}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      color: '#2563eb',
+                      cursor: 'pointer',
+                      fontSize: '0.75rem'
+                    }}
+                  >
+                    Esqueceu sua senha?
+                  </button>
+                </div>
+              </FormGroup>
+              <Button type="submit" disabled={isLoading}>
+                {isLoading ? 'Carregando...' : 'Entrar'}
+              </Button>
+            </form>
+          ) : (
+            <form onSubmit={handleSignupSubmit}>
+              <FormGroup>
+                <Label htmlFor="signup-name">Nome completo</Label>
+                <Input
+                  id="signup-name"
+                  type="text"
+                  placeholder="João Silva"
+                  value={signupForm.name}
+                  onChange={(e) => setSignupForm({ ...signupForm, name: e.target.value })}
+                  required
+                />
+              </FormGroup>
+              <FormGroup>
+                <Label htmlFor="signup-email">E-mail</Label>
+                <Input
+                  id="signup-email"
+                  type="email"
+                  placeholder="seu@email.com"
+                  value={signupForm.email}
+                  onChange={(e) => setSignupForm({ ...signupForm, email: e.target.value })}
+                  required
+                />
+              </FormGroup>
+              <FormGroup>
+                <Label htmlFor="signup-password">Senha</Label>
+                <Input
+                  id="signup-password"
+                  type="password"
+                  placeholder="••••••••"
+                  value={signupForm.password}
+                  onChange={(e) => setSignupForm({ ...signupForm, password: e.target.value })}
+                  required
+                />
+              </FormGroup>
+              <FormGroup>
+                <Label htmlFor="signup-confirm-password">Confirmar senha</Label>
+                <Input
+                  id="signup-confirm-password"
+                  type="password"
+                  placeholder="••••••••"
+                  value={signupForm.confirmPassword}
+                  onChange={(e) => setSignupForm({ ...signupForm, confirmPassword: e.target.value })}
+                  required
+                />
+              </FormGroup>
+              {error && (
+                <ErrorMessage>
+                  <ErrorIcon />
+                  {error}
+                </ErrorMessage>
+              )}
+              <Button type="submit" disabled={isLoading}>
+                {isLoading ? 'Carregando...' : 'Cadastrar'}
+              </Button>
+            </form>
+          )}
 
-            <Divider>
-              <span>ou</span>
-            </Divider>
-
-            <FormGroup>
-              <Label htmlFor="signup-name">Nome completo</Label>
-              <Input
-                id="signup-name"
-                type="text"
-                placeholder="João Silva"
-                value={signupForm.name}
-                onChange={(e) => setSignupForm({ ...signupForm, name: e.target.value })}
-                required
-              />
-            </FormGroup>
-            <FormGroup>
-              <Label htmlFor="signup-email">E-mail</Label>
-              <Input
-                id="signup-email"
-                type="email"
-                placeholder="seu@email.com"
-                value={signupForm.email}
-                onChange={(e) => setSignupForm({ ...signupForm, email: e.target.value })}
-                required
-              />
-            </FormGroup>
-            <FormGroup>
-              <Label htmlFor="signup-password">Senha</Label>
-              <Input
-                id="signup-password"
-                type="password"
-                placeholder="••••••••"
-                value={signupForm.password}
-                onChange={(e) => setSignupForm({ ...signupForm, password: e.target.value })}
-                required
-              />
-            </FormGroup>
-            <FormGroup>
-              <Label htmlFor="signup-confirm-password">Confirmar senha</Label>
-              <Input
-                id="signup-confirm-password"
-                type="password"
-                placeholder="••••••••"
-                value={signupForm.confirmPassword}
-                onChange={(e) => setSignupForm({ ...signupForm, confirmPassword: e.target.value })}
-                required
-              />
-            </FormGroup>
-            <FormGroup>
-              <Label htmlFor="signup-belt">Faixa</Label>
-              <Select
-                id="signup-belt"
-                value={signupForm.belt}
-                onChange={(e) => setSignupForm({ ...signupForm, belt: e.target.value })}
-                required
-              >
-                <option value="branca">Branca</option>
-                <option value="azul">Azul</option>
-                <option value="roxa">Roxa</option>
-                <option value="marrom">Marrom</option>
-                <option value="preta">Preta</option>
-              </Select>
-            </FormGroup>
-            <FormGroup>
-              <Label htmlFor="signup-stripes">Graus</Label>
-              <Select
-                id="signup-stripes"
-                value={signupForm.stripes}
-                onChange={(e) => setSignupForm({ ...signupForm, stripes: e.target.value })}
-                required
-              >
-                <option value="0">0</option>
-                <option value="1">1</option>
-                <option value="2">2</option>
-                <option value="3">3</option>
-                <option value="4">4</option>
-              </Select>
-            </FormGroup>
-            {error && (
-              <ErrorMessage>
-                <ErrorIcon />
-                {error}
-              </ErrorMessage>
-            )}
-            <Button type="submit">
-              Cadastrar
-            </Button>
-          </Form>
-        )}
-      </Card>
+          <div style={{ marginTop: '1.5rem', textAlign: 'center' }}>
+            <button
+              type="button"
+              onClick={() => setActiveTab(activeTab === 'login' ? 'signup' : 'login')}
+              style={{
+                background: 'none',
+                border: 'none',
+                color: '#2563eb',
+                cursor: 'pointer',
+                fontSize: '0.875rem'
+              }}
+            >
+              {activeTab === 'login' 
+                ? 'Não tem uma conta? Cadastre-se'
+                : 'Já tem uma conta? Entre agora'}
+            </button>
+          </div>
+        </div>
+      </FormSection>
     </Container>
   );
 };

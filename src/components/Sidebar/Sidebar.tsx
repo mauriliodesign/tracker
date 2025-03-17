@@ -11,6 +11,7 @@ interface SidebarProps {
   userBelt: string;
   userStripes: number;
   onProfileClick: () => void;
+  onLogout: () => void;
   isCollapsed: boolean;
   onCollapse: () => void;
 }
@@ -229,6 +230,43 @@ const ChevronIcon = () => (
   </svg>
 );
 
+const LogoutIcon = () => (
+  <svg viewBox="0 0 24 24">
+    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+    <polyline points="16 17 21 12 16 7" />
+    <line x1="21" y1="12" x2="9" y2="12" />
+  </svg>
+);
+
+const LogoutButton = styled.button<{ $isCollapsed: boolean }>`
+  display: flex;
+  align-items: center;
+  padding: 0.75rem ${props => props.$isCollapsed ? '0' : '1rem'};
+  color: #a3a3a3;
+  border-radius: 0.5rem;
+  transition: all 0.2s ease-in-out;
+  background-color: transparent;
+  justify-content: ${props => props.$isCollapsed ? 'center' : 'flex-start'};
+  width: 100%;
+  border: none;
+  cursor: pointer;
+
+  &:hover {
+    background-color: #1e1e1e;
+    color: #ffffff;
+  }
+
+  svg {
+    width: 1.25rem;
+    height: 1.25rem;
+    margin-right: ${props => props.$isCollapsed ? '0' : '0.75rem'};
+  }
+
+  span {
+    display: ${props => props.$isCollapsed ? 'none' : 'inline'};
+  }
+`;
+
 const Sidebar: React.FC<SidebarProps> = ({
   $isOpen,
   onToggle,
@@ -238,6 +276,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   userBelt,
   userStripes,
   onProfileClick,
+  onLogout,
   isCollapsed,
   onCollapse
 }) => {
@@ -287,21 +326,27 @@ const Sidebar: React.FC<SidebarProps> = ({
       </SidebarNav>
 
       <SidebarFooter $isCollapsed={isCollapsed}>
-        <UserInfo
-          $isCollapsed={isCollapsed}
-          onClick={onProfileClick}
-          role="button"
-          tabIndex={0}
-          aria-label="Perfil do usuário"
-        >
-          <Avatar>{getInitials(userName)}</Avatar>
-          <div className="user-details">
-            <div className="name">{userName}</div>
-            <div className="belt">
-              {userBelt.charAt(0).toUpperCase() + userBelt.slice(1)} • {userStripes} {userStripes === 1 ? 'grau' : 'graus'}
+        <div style={{ display: 'flex', flexDirection: 'column', width: '100%', gap: '0.5rem' }}>
+          <UserInfo
+            $isCollapsed={isCollapsed}
+            onClick={onProfileClick}
+            role="button"
+            tabIndex={0}
+            aria-label="Perfil do usuário"
+          >
+            <Avatar>{getInitials(userName)}</Avatar>
+            <div className="user-details">
+              <div className="name">{userName}</div>
+              <div className="belt">
+                {userBelt.charAt(0).toUpperCase() + userBelt.slice(1)} • {userStripes} {userStripes === 1 ? 'grau' : 'graus'}
+              </div>
             </div>
-          </div>
-        </UserInfo>
+          </UserInfo>
+          <LogoutButton $isCollapsed={isCollapsed} onClick={onLogout}>
+            <LogoutIcon />
+            <span>Sair</span>
+          </LogoutButton>
+        </div>
       </SidebarFooter>
     </SidebarContainer>
   );

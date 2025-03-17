@@ -12,6 +12,7 @@ interface LayoutProps {
   userBelt: string;
   userStripes: number;
   onProfileClick: () => void;
+  onLogout: () => void;
 }
 
 const Container = styled.div`
@@ -47,7 +48,8 @@ const Layout: React.FC<LayoutProps> = ({
   userName,
   userBelt,
   userStripes,
-  onProfileClick
+  onProfileClick,
+  onLogout
 }) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
@@ -67,6 +69,10 @@ const Layout: React.FC<LayoutProps> = ({
         userStripes={userStripes}
         onProfileClick={() => {
           onProfileClick();
+          setIsSidebarOpen(false);
+        }}
+        onLogout={() => {
+          onLogout();
           setIsSidebarOpen(false);
         }}
         isCollapsed={isSidebarCollapsed}

@@ -7,7 +7,6 @@ import { Link, useNavigate } from 'react-router-dom';
 import { ArrowLeft, ChevronLeft, ChevronRight } from 'lucide-react';
 import styled from '@emotion/styled';
 import Button from '../../components/Button';
-import Layout from '../../components/Layout/Layout';
 import { WeekDays, ClassDetails, WeekSchedule } from '../../types/schedule';
 import { createWeekSchedule } from '../../utils/schedule';
 
@@ -101,17 +100,40 @@ const getBeltColor = (belt: string) => {
   }
 };
 
+const ClassDetailsContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+`;
+
+const ClassHeader = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+`;
+
+const ClassTime = styled.div`
+  color: #a3a3a3;
+  font-size: 0.875rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+`;
+
+const SectionTitle = styled.h2`
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+`;
+
 const ClassesSchedule = () => {
-  const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState('aulas');
-  const [showProfile, setShowProfile] = useState(false);
   const [selectedClass, setSelectedClass] = useState<ClassDetails | null>(null);
   const [weekIndex, setWeekIndex] = useState(0);
   const [selectedDay, setSelectedDay] = useState<string | null>(null);
   const [weekScheduleState, setWeekScheduleState] = useState<WeekSchedule>(createWeekSchedule(0));
   const userName = "João Silva";
   const userBelt = "azul";
-  const userStripes = 2;
+  const userStripes: number = 2;
 
   // Atualiza o cronograma quando o índice da semana muda
   useEffect(() => {
@@ -224,86 +246,101 @@ const ClassesSchedule = () => {
     const isFull = selectedClass.enrolledStudents >= selectedClass.capacity;
 
     return (
-      <div className="p-4">
-        <div className="mb-6 flex items-center">
+      <ClassDetailsContainer>
+        <ClassHeader>
           <Button 
             onClick={() => setSelectedClass(null)}
             variant="blocked"
             icon={<ArrowLeft size={20} />}
           />
-          <div className="ml-4">
-            <h1 className="text-2xl font-bold">{selectedClass.name}</h1>
-            <div className="text-gray-400">{selectedClass.time} - {selectedClass.instructor}</div>
-          </div>
+        </ClassHeader>
+
+        <div>
+          <ClassTime>
+            {selectedClass.time} • 60 minutos • {selectedClass.instructor}
+          </ClassTime>
         </div>
 
-        <div className="grid gap-6">
-          <Card>
-            <h2 className="text-lg font-semibold mb-2">Sobre a Aula</h2>
-            <p className="text-gray-400">{selectedClass.description}</p>
-            <div className="mt-4 flex items-center space-x-4">
-              <div className="flex items-center">
-                <svg 
-                  xmlns="http://www.w3.org/2000/svg" 
-                  width="16" 
-                  height="16" 
-                  viewBox="0 0 24 24" 
-                  fill="none" 
-                  stroke="currentColor" 
-                  strokeWidth="2" 
-                  strokeLinecap="round" 
-                  strokeLinejoin="round"
-                  className="mr-2 text-gray-400"
-                >
-                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
-                  <circle cx="9" cy="7" r="4" />
-                  <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
-                  <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-                </svg>
-                <span className="text-gray-400">
-                  {selectedClass.enrolledStudents}/{selectedClass.capacity} alunos
-                </span>
-              </div>
+        <Card>
+          <SectionTitle>Sobre a Aula</SectionTitle>
+          <p style={{ color: '#a3a3a3' }}>{selectedClass.description}</p>
+          <div style={{ marginTop: '1rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <svg 
+                xmlns="http://www.w3.org/2000/svg" 
+                width="16" 
+                height="16" 
+                viewBox="0 0 24 24" 
+                fill="none" 
+                stroke="currentColor" 
+                strokeWidth="2" 
+                strokeLinecap="round" 
+                strokeLinejoin="round"
+                style={{ color: '#a3a3a3' }}
+              >
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                <circle cx="9" cy="7" r="4"></circle>
+                <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+              </svg>
+              <span style={{ color: '#a3a3a3', fontSize: '0.875rem' }}>
+                {selectedClass.enrolledStudents}/{selectedClass.capacity} alunos
+              </span>
             </div>
-            <Button
-              variant={isEnrolled ? 'muted' : isFull ? 'blocked' : 'primary'}
-              fullWidth
-              onClick={() => handleEnrollment(selectedClass)}
-              disabled={isFull && !isEnrolled}
-              className="mt-4"
-            >
-              {isEnrolled 
-                ? 'Cancelar Inscrição' 
-                : isFull
-                  ? 'Turma Lotada'
-                  : 'Inscrever-se'}
-            </Button>
-          </Card>
+          </div>
+        </Card>
 
-          <Card>
-            <h2 className="text-lg font-semibold mb-4">Alunos Inscritos</h2>
-            <div className="space-y-3">
-              {selectedClass.students?.map(student => (
-                <div 
-                  key={student.id} 
-                  className="flex items-center justify-between p-3 rounded-lg bg-gray-800"
-                >
-                  <div className="flex items-center space-x-3">
-                    <div 
-                      className="w-3 h-3 rounded-full" 
-                      style={{ backgroundColor: getBeltColor(student.belt) }}
-                    />
-                    <span>{student.name}</span>
+        <Card>
+          <SectionTitle>Alunos Inscritos</SectionTitle>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+            {selectedClass.students?.map((student, index) => (
+              <div 
+                key={student.id}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  padding: '1rem',
+                  backgroundColor: 'rgba(30, 30, 30, 0.5)',
+                  borderRadius: '0.75rem'
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                  <div 
+                    style={{
+                      width: '2.5rem',
+                      height: '2.5rem',
+                      borderRadius: '9999px',
+                      backgroundColor: '#2563eb',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: '#ffffff',
+                      fontWeight: 600
+                    }}
+                  >
+                    {student.name.split(' ').map(n => n[0]).join('')}
                   </div>
-                  <div className="text-sm text-gray-400">
-                    {student.belt.charAt(0).toUpperCase() + student.belt.slice(1)} • {student.stripes} {student.stripes.toString() === '1' ? 'grau' : 'graus'}
+                  <div>
+                    <div style={{ fontWeight: 500 }}>{student.name}</div>
+                    <div style={{ color: '#a3a3a3', fontSize: '0.875rem' }}>
+                      {student.belt.charAt(0).toUpperCase() + student.belt.slice(1)} • {student.stripes} {student.stripes === 1 ? 'grau' : 'graus'}
+                    </div>
                   </div>
                 </div>
-              ))}
-            </div>
-          </Card>
-        </div>
-      </div>
+              </div>
+            ))}
+          </div>
+        </Card>
+
+        <Button
+          onClick={() => handleEnrollment(selectedClass)}
+          disabled={!isEnrolled && isFull}
+          variant={isEnrolled ? 'muted' : 'primary'}
+        >
+          {isEnrolled ? 'Cancelar Inscrição' : isFull ? 'Turma Lotada' : 'Inscrever-se'}
+        </Button>
+      </ClassDetailsContainer>
     );
   };
 
@@ -322,10 +359,7 @@ const ClassesSchedule = () => {
     return (
       <div className="p-4">
         <div className="mb-6">
-          <div className="flex justify-between items-center mb-6">
-            <div className="flex items-center space-x-4">
-              <h1 className="text-2xl font-bold">Aulas da Semana</h1>
-            </div>
+          <div className="flex justify-end mb-6">
             <div className="flex space-x-2">
               <IconButton 
                 onClick={() => {
@@ -435,143 +469,7 @@ const ClassesSchedule = () => {
     );
   };
 
-  const renderProfile = () => {
-    return (
-      <div className="max-w-2xl mx-auto">
-        <div className="flex items-center mb-8">
-          <Button 
-            onClick={() => {
-              setActiveTab('aulas');
-              setShowProfile(false);
-            }}
-            variant="blocked"
-            icon={<ArrowLeft size={20} />}
-          />
-          <div className="ml-4">
-            <h1 className="text-2xl font-bold">{userName}</h1>
-            <div className="text-gray-400">ID: #12345</div>
-          </div>
-        </div>
-
-        <div className="grid gap-6">
-          <Card>
-            <h2 className="text-lg font-semibold mb-4">Graduação</h2>
-            <BeltDisplay>
-              <div 
-                className="w-32 h-8 rounded"
-                style={{ backgroundColor: getBeltColor(userBelt) }}
-              />
-              <div className="flex gap-1">
-                {Array.from({ length: userStripes }).map((_, index) => (
-                  <BeltStripe key={index} />
-                ))}
-              </div>
-              <div className="ml-auto text-gray-400">
-                {userBelt.charAt(0).toUpperCase() + userBelt.slice(1)} • {userStripes} {userStripes.toString() === '1' ? 'grau' : 'graus'}
-              </div>
-            </BeltDisplay>
-          </Card>
-
-          <Card>
-            <h2 className="text-lg font-semibold mb-4">Estatísticas do Mês</h2>
-            <div className="grid grid-cols-3 gap-4">
-              <StatCard>
-                <div className="value">12</div>
-                <div className="label">Treinos</div>
-              </StatCard>
-              <StatCard>
-                <div className="value">8</div>
-                <div className="label">Aulas</div>
-              </StatCard>
-              <StatCard>
-                <div className="value">85%</div>
-                <div className="label">Frequência</div>
-              </StatCard>
-            </div>
-          </Card>
-
-          <Card>
-            <h2 className="text-lg font-semibold mb-4">Informações Pessoais</h2>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between p-3 bg-gray-800 rounded-lg">
-                <div className="text-sm text-gray-400">Email</div>
-                <div>joao.silva@email.com</div>
-              </div>
-              <div className="flex items-center justify-between p-3 bg-gray-800 rounded-lg">
-                <div className="text-sm text-gray-400">Telefone</div>
-                <div>(11) 98765-4321</div>
-              </div>
-              <div className="flex items-center justify-between p-3 bg-gray-800 rounded-lg">
-                <div className="text-sm text-gray-400">Academia</div>
-                <div>Team BJJ</div>
-              </div>
-              <div className="flex items-center justify-between p-3 bg-gray-800 rounded-lg">
-                <div className="text-sm text-gray-400">Plano</div>
-                <div className="flex items-center">
-                  <span className="text-emerald-400 mr-2">●</span>
-                  <span>4x por semana</span>
-                </div>
-              </div>
-            </div>
-          </Card>
-
-          <Card>
-            <h2 className="text-lg font-semibold mb-4">Próximas Aulas</h2>
-            <div className="space-y-3">
-              {Object.values(weekScheduleState.days)
-                .flatMap(day => day.classes)
-                .filter(classItem => classItem.students?.some(student => student.name === userName))
-                .slice(0, 3)
-                .map(classItem => (
-                  <div 
-                    key={classItem.id}
-                    className="flex items-center justify-between p-3 bg-gray-800 rounded-lg"
-                  >
-                    <div>
-                      <div className="font-medium">{classItem.name}</div>
-                      <div className="text-sm text-gray-400">{classItem.time} - {classItem.instructor}</div>
-                    </div>
-                    <Button
-                      variant="muted"
-                      onClick={() => handleEnrollment(classItem)}
-                    >
-                      Cancelar
-                    </Button>
-                  </div>
-                ))}
-            </div>
-          </Card>
-        </div>
-      </div>
-    );
-  };
-
-  return (
-    <Layout
-      title={showProfile ? "Perfil" : "Aulas"}
-      activeTab={activeTab}
-      onTabChange={(tab: string) => {
-        switch (tab) {
-          case 'aulas':
-            navigate('/aulas');
-            break;
-          case 'estatisticas':
-            navigate('/estatisticas');
-            break;
-        }
-      }}
-      userName={userName}
-      userBelt={userBelt}
-      userStripes={userStripes}
-      onProfileClick={() => navigate('/perfil')}
-    >
-      {showProfile 
-        ? renderProfile() 
-        : selectedClass
-        ? renderClassDetails()
-        : renderSchedule()}
-    </Layout>
-  );
+  return selectedClass ? renderClassDetails() : renderSchedule();
 };
 
 export default ClassesSchedule; 
