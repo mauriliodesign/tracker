@@ -29,8 +29,8 @@ const StatsGrid = styled.div`
 
 const StatCard = styled.div`
   background-color: rgba(30, 30, 30, 0.5);
-  border-radius: 0.75rem;
-  padding: 1.25rem;
+  border-radius: 1rem;
+  padding: 1.5rem;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -41,7 +41,7 @@ const StatValue = styled.div`
   font-size: 2rem;
   font-weight: 700;
   color: #2563eb;
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.75rem;
 `;
 
 const StatLabel = styled.div`
@@ -52,13 +52,13 @@ const StatLabel = styled.div`
 const HistoryList = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: 1rem;
 `;
 
 const HistoryItem = styled.div`
   background-color: rgba(30, 30, 30, 0.5);
-  border-radius: 0.75rem;
-  padding: 1rem;
+  border-radius: 1rem;
+  padding: 1.5rem;
   display: flex;
   justify-content: space-between;
   align-items: center;

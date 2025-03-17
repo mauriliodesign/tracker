@@ -3,6 +3,8 @@ import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import ClassesSchedule from '../pages/ClassesSchedule/ClassesSchedule';
 import Statistics from '../pages/Statistics/Statistics';
 import Profile from '../pages/Profile/Profile';
+import Payments from '../pages/Payments/Payments';
+import Dashboard from '../pages/Dashboard/Dashboard';
 import Auth from '../pages/Auth/Auth';
 import ResetPassword from '../pages/Auth/ResetPassword';
 import Layout from './Layout/Layout';
@@ -38,9 +40,26 @@ const AppRoutes: React.FC = () => {
 
   return (
     <Routes>
-      <Route path="/" element={<Navigate to="/aulas" replace />} />
-      <Route path="/login" element={<Navigate to="/aulas" replace />} />
-      <Route path="/reset-password" element={<Navigate to="/aulas" replace />} />
+      <Route path="/" element={<Navigate to="/inicio" replace />} />
+      <Route path="/login" element={<Navigate to="/inicio" replace />} />
+      <Route path="/reset-password" element={<Navigate to="/inicio" replace />} />
+      <Route 
+        path="/inicio" 
+        element={
+          <Layout 
+            title="Início"
+            activeTab="inicio"
+            onTabChange={handleTabChange}
+            userName={user?.name || ''}
+            userBelt={user?.belt || 'branca'}
+            userStripes={user?.stripes || 0}
+            onProfileClick={handleProfileClick}
+            onLogout={handleLogout}
+          >
+            <Dashboard />
+          </Layout>
+        } 
+      />
       <Route 
         path="/aulas" 
         element={
@@ -92,7 +111,24 @@ const AppRoutes: React.FC = () => {
           </Layout>
         } 
       />
-      <Route path="*" element={<Navigate to="/aulas" replace />} />
+      <Route 
+        path="/pagamentos" 
+        element={
+          <Layout 
+            title="Pagamentos"
+            activeTab="pagamentos"
+            onTabChange={handleTabChange}
+            userName={user?.name || ''}
+            userBelt={user?.belt || 'branca'}
+            userStripes={user?.stripes || 0}
+            onProfileClick={handleProfileClick}
+            onLogout={handleLogout}
+          >
+            <Payments />
+          </Layout>
+        } 
+      />
+      <Route path="*" element={<Navigate to="/inicio" replace />} />
     </Routes>
   );
 };

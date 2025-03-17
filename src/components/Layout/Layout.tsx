@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import styled from '@emotion/styled';
 import Header from '../Header/Header';
-import { default as SidebarComponent } from '../Sidebar/Sidebar';
+import SidebarComponent from '../Sidebar/Sidebar';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -37,7 +37,14 @@ const MainContent = styled.div<{ $isSidebarOpen: boolean; $isSidebarCollapsed: b
 
 const PageContent = styled.main`
   flex: 1;
-  padding: 1.5rem;
+  padding: 2rem;
+  max-width: 1280px;
+  margin: 0 auto;
+  width: 100%;
+
+  @media (max-width: 768px) {
+    padding: 1.5rem;
+  }
 `;
 
 const Layout: React.FC<LayoutProps> = ({

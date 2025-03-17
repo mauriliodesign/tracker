@@ -13,13 +13,13 @@ import { createWeekSchedule } from '../../utils/schedule';
 const Container = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: 2rem;
 `;
 
 const Card = styled.div<{ clickable?: boolean }>`
   background-color: #111111;
-  border-radius: 12px;
-  padding: 1.25rem;
+  border-radius: 1rem;
+  padding: 1.5rem;
   transition: all 0.2s ease-in-out;
   border: 1px solid #222222;
 
@@ -109,13 +109,14 @@ const getBeltColor = (belt: string) => {
 const ClassDetailsContainer = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: 2rem;
 `;
 
 const ClassHeader = styled.div`
   display: flex;
   align-items: center;
   gap: 1rem;
+  margin-bottom: 1rem;
 `;
 
 const ClassTime = styled.div`
@@ -253,15 +254,15 @@ const ClassesSchedule = () => {
 
     return (
       <ClassDetailsContainer>
-        <ClassHeader>
-          <Button 
-            onClick={() => setSelectedClass(null)}
-            variant="blocked"
-            icon={<ArrowLeft size={20} />}
-          />
-        </ClassHeader>
-
         <div>
+          <ClassHeader>
+            <Button 
+              onClick={() => setSelectedClass(null)}
+              variant="blocked"
+              icon={<ArrowLeft size={20} />}
+            />
+          </ClassHeader>
+
           <ClassTime>
             {selectedClass.time} • 60 minutos • {selectedClass.instructor}
           </ClassTime>
@@ -269,8 +270,8 @@ const ClassesSchedule = () => {
 
         <Card>
           <SectionTitle>Sobre a Aula</SectionTitle>
-          <p style={{ color: '#a3a3a3' }}>{selectedClass.description}</p>
-          <div style={{ marginTop: '1rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
+          <p style={{ color: '#a3a3a3', marginBottom: '1.5rem' }}>{selectedClass.description}</p>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               <svg 
                 xmlns="http://www.w3.org/2000/svg" 
@@ -298,38 +299,21 @@ const ClassesSchedule = () => {
 
         <Card>
           <SectionTitle>Alunos Inscritos</SectionTitle>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+          <div className="space-y-4">
             {selectedClass.students?.map((student, index) => (
               <div 
                 key={student.id}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  padding: '1rem',
-                  backgroundColor: 'rgba(30, 30, 30, 0.5)',
-                  borderRadius: '0.75rem'
-                }}
+                className="p-4 rounded-xl bg-[rgba(30,30,30,0.5)] flex items-center justify-between"
               >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                <div className="flex items-center gap-3">
                   <div 
-                    style={{
-                      width: '2.5rem',
-                      height: '2.5rem',
-                      borderRadius: '9999px',
-                      backgroundColor: '#2563eb',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      color: '#ffffff',
-                      fontWeight: 600
-                    }}
+                    className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center text-white font-semibold"
                   >
                     {student.name.split(' ').map(n => n[0]).join('')}
                   </div>
                   <div>
-                    <div style={{ fontWeight: 500 }}>{student.name}</div>
-                    <div style={{ color: '#a3a3a3', fontSize: '0.875rem' }}>
+                    <div className="font-medium">{student.name}</div>
+                    <div className="text-sm text-gray-400">
                       {student.belt.charAt(0).toUpperCase() + student.belt.slice(1)} • {student.stripes} {student.stripes === 1 ? 'grau' : 'graus'}
                     </div>
                   </div>
@@ -363,8 +347,8 @@ const ClassesSchedule = () => {
     const currentDayIndex = today === 0 ? 6 : today - 1;
 
     return (
-      <div className="p-4">
-        <div className="mb-6">
+      <div className="space-y-8">
+        <div>
           <div className="flex justify-end mb-6">
             <div className="flex space-x-2">
               <IconButton 
@@ -391,7 +375,7 @@ const ClassesSchedule = () => {
             </div>
           </div>
 
-          <div className="grid grid-cols-5 gap-2">
+          <div className="grid grid-cols-5 gap-4">
             {weekDays.map((weekDay, index) => {
               const daySchedule = weekScheduleState.days[weekDay.key];
               const isToday = index === currentDayIndex;
@@ -406,7 +390,7 @@ const ClassesSchedule = () => {
                     }
                   }}
                   className={`
-                    relative p-4 rounded-lg text-center cursor-pointer transition-all duration-200
+                    relative p-4 rounded-xl text-center cursor-pointer transition-all duration-200
                     hover:bg-gray-800
                     ${isToday ? 'bg-gray-800' : ''}
                     ${isSelected ? 'bg-gray-700 ring-2 ring-blue-500' : ''}
@@ -436,40 +420,38 @@ const ClassesSchedule = () => {
         </div>
 
         {selectedDay !== null && (
-          <div className="mt-8">
-            <Card>
-              <div className="space-y-4">
-                {weekScheduleState.days[selectedDay as keyof typeof WeekDays].classes.map((classItem: ClassDetails) => (
-                  <div
-                    key={classItem.id}
-                    onClick={() => setSelectedClass(classItem)}
-                    className="p-4 rounded-lg bg-gray-800 hover:bg-gray-700 cursor-pointer"
-                  >
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <div className="font-medium">{classItem.name}</div>
-                        <div className="text-sm text-gray-400">
-                          {classItem.time} - {classItem.instructor}
-                        </div>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <div className="text-sm text-gray-400">
-                          {classItem.enrolledStudents}/{classItem.capacity}
-                        </div>
-                        <div className={`w-2 h-2 rounded-full ${
-                          classItem.enrolledStudents >= classItem.capacity 
-                            ? 'bg-red-500' 
-                            : classItem.enrolledStudents >= classItem.capacity * 0.8
-                            ? 'bg-yellow-500'
-                            : 'bg-green-500'
-                        }`} />
+          <Card>
+            <div className="space-y-4">
+              {weekScheduleState.days[selectedDay as keyof typeof WeekDays].classes.map((classItem: ClassDetails) => (
+                <div
+                  key={classItem.id}
+                  onClick={() => setSelectedClass(classItem)}
+                  className="p-4 rounded-xl bg-[rgba(30,30,30,0.5)] hover:bg-[rgba(30,30,30,0.7)] cursor-pointer"
+                >
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <div className="font-medium">{classItem.name}</div>
+                      <div className="text-sm text-gray-400">
+                        {classItem.time} - {classItem.instructor}
                       </div>
                     </div>
+                    <div className="flex items-center space-x-2">
+                      <div className="text-sm text-gray-400">
+                        {classItem.enrolledStudents}/{classItem.capacity}
+                      </div>
+                      <div className={`w-2 h-2 rounded-full ${
+                        classItem.enrolledStudents >= classItem.capacity 
+                          ? 'bg-red-500' 
+                          : classItem.enrolledStudents >= classItem.capacity * 0.8
+                          ? 'bg-yellow-500'
+                          : 'bg-green-500'
+                      }`} />
+                    </div>
                   </div>
-                ))}
-              </div>
-            </Card>
-          </div>
+                </div>
+              ))}
+            </div>
+          </Card>
         )}
       </div>
     );
