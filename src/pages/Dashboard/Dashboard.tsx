@@ -117,6 +117,7 @@ const ProgressInfo = styled.div`
 
 const Dashboard: React.FC = () => {
   const nextClass = {
+    id: 'fundamentos-19h',
     name: 'Jiu-jitsu Fundamentos',
     time: 'Hoje, 19:00',
     instructor: 'Prof. André',
@@ -162,7 +163,7 @@ const Dashboard: React.FC = () => {
             <span>•</span>
             <span>{nextClass.duration}</span>
           </ClassDetails>
-          <Link to="/aulas" style={{ textDecoration: 'none' }}>
+          <Link to={`/aulas?class=${nextClass.id}`} style={{ textDecoration: 'none' }}>
             <Button variant="primary">
               Ver Detalhes
             </Button>

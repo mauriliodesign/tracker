@@ -3,7 +3,7 @@
 /** @jsxFrag React.Fragment */
 import { jsx } from '@emotion/react';
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { ArrowLeft, ChevronLeft, ChevronRight } from 'lucide-react';
 import styled from '@emotion/styled';
 import Button from '../../components/Button';
@@ -133,14 +133,65 @@ const SectionTitle = styled.h2`
   margin-bottom: 1rem;
 `;
 
-const ClassesSchedule = () => {
-  const [selectedClass, setSelectedClass] = useState<ClassDetails | null>(null);
+const ClassName = styled.div`
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #ffffff;
+`;
+
+const ClassStatus = styled.div<{ $status: 'scheduled' | 'available' }>`
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  background-color: ${props => props.$status === 'scheduled' ? 'rgba(37, 99, 235, 0.1)' : 'rgba(34, 197, 94, 0.1)'};
+  color: ${props => props.$status === 'scheduled' ? '#2563eb' : '#22c55e'};
+`;
+
+const ClassDetails = styled.div`
+  display: flex;
+  gap: 0.5rem;
+  color: #a3a3a3;
+  font-size: 0.875rem;
+  margin-top: 0.5rem;
+`;
+
+const ClassCard = styled.div<{ $isSelected?: boolean }>`
+  background-color: ${props => props.$isSelected ? 'rgba(37, 99, 235, 0.1)' : 'rgba(30, 30, 30, 0.5)'};
+  border-radius: 1rem;
+  padding: 1.5rem;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  border: ${props => props.$isSelected ? '2px solid #2563eb' : 'none'};
+
+  &:hover {
+    background-color: ${props => props.$isSelected ? 'rgba(37, 99, 235, 0.15)' : 'rgba(30, 30, 30, 0.7)'};
+  }
+`;
+
+const ClassesSchedule: React.FC = () => {
+  const [searchParams] = useSearchParams();
+  const [selectedClass, setSelectedClass] = useState<string | null>(null);
   const [weekIndex, setWeekIndex] = useState(0);
   const [selectedDay, setSelectedDay] = useState<string | null>(null);
   const [weekScheduleState, setWeekScheduleState] = useState<WeekSchedule>(createWeekSchedule(0));
   const userName = "João Silva";
   const userBelt = "azul";
   const userStripes: number = 2;
+
+  useEffect(() => {
+    const classId = searchParams.get('class');
+    if (classId) {
+      setSelectedClass(classId);
+      // Scroll to the class card after a short delay to ensure the DOM is ready
+      setTimeout(() => {
+        const element = document.getElementById(`class-${classId}`);
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }, 100);
+    }
+  }, [searchParams]);
 
   // Atualiza o cronograma quando o índice da semana muda
   useEffect(() => {
@@ -181,7 +232,7 @@ const ClassesSchedule = () => {
       };
       
       // Atualizar a classe selecionada
-      setSelectedClass(updatedClass);
+      setSelectedClass(null);
       
       // Atualizar a classe na lista de classes do dia
       if (selectedDay !== null) {
@@ -223,7 +274,7 @@ const ClassesSchedule = () => {
       };
 
       // Atualizar a classe selecionada
-      setSelectedClass(updatedClass);
+      setSelectedClass(null);
 
       // Atualizar a classe na lista de classes do dia
       if (selectedDay !== null) {
@@ -249,8 +300,8 @@ const ClassesSchedule = () => {
   const renderClassDetails = () => {
     if (!selectedClass) return null;
 
-    const isEnrolled = selectedClass.students?.some(student => student.name === userName);
-    const isFull = selectedClass.enrolledStudents >= selectedClass.capacity;
+    const isEnrolled = weekScheduleState.days[selectedDay as keyof typeof WeekDays].classes.some(c => c.id === selectedClass);
+    const isFull = weekScheduleState.days[selectedDay as keyof typeof WeekDays].classes.some(c => c.enrolledStudents >= c.capacity);
 
     return (
       <ClassDetailsContainer>
@@ -264,13 +315,13 @@ const ClassesSchedule = () => {
           </ClassHeader>
 
           <ClassTime>
-            {selectedClass.time} • 60 minutos • {selectedClass.instructor}
+            {weekScheduleState.days[selectedDay as keyof typeof WeekDays].classes.find(c => c.id === selectedClass)?.time} • 60 minutos • {weekScheduleState.days[selectedDay as keyof typeof WeekDays].classes.find(c => c.id === selectedClass)?.instructor}
           </ClassTime>
         </div>
 
         <Card>
           <SectionTitle>Sobre a Aula</SectionTitle>
-          <p style={{ color: '#a3a3a3', marginBottom: '1.5rem' }}>{selectedClass.description}</p>
+          <p style={{ color: '#a3a3a3', marginBottom: '1.5rem' }}>{weekScheduleState.days[selectedDay as keyof typeof WeekDays].classes.find(c => c.id === selectedClass)?.description}</p>
           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               <svg 
@@ -291,7 +342,7 @@ const ClassesSchedule = () => {
                 <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
               </svg>
               <span style={{ color: '#a3a3a3', fontSize: '0.875rem' }}>
-                {selectedClass.enrolledStudents}/{selectedClass.capacity} alunos
+                {weekScheduleState.days[selectedDay as keyof typeof WeekDays].classes.find(c => c.id === selectedClass)?.enrolledStudents}/{weekScheduleState.days[selectedDay as keyof typeof WeekDays].classes.find(c => c.id === selectedClass)?.capacity} alunos
               </span>
             </div>
           </div>
@@ -300,7 +351,7 @@ const ClassesSchedule = () => {
         <Card>
           <SectionTitle>Alunos Inscritos</SectionTitle>
           <div className="space-y-4">
-            {selectedClass.students?.map((student, index) => (
+            {weekScheduleState.days[selectedDay as keyof typeof WeekDays].classes.find(c => c.id === selectedClass)?.students?.map((student, index) => (
               <div 
                 key={student.id}
                 className="p-4 rounded-xl bg-[rgba(30,30,30,0.5)] flex items-center justify-between"
@@ -324,7 +375,7 @@ const ClassesSchedule = () => {
         </Card>
 
         <Button
-          onClick={() => handleEnrollment(selectedClass)}
+          onClick={() => handleEnrollment(weekScheduleState.days[selectedDay as keyof typeof WeekDays].classes.find(c => c.id === selectedClass) as ClassDetails)}
           disabled={!isEnrolled && isFull}
           variant={isEnrolled ? 'muted' : 'primary'}
         >
@@ -423,32 +474,34 @@ const ClassesSchedule = () => {
           <Card>
             <div className="space-y-4">
               {weekScheduleState.days[selectedDay as keyof typeof WeekDays].classes.map((classItem: ClassDetails) => (
-                <div
+                <ClassCard
                   key={classItem.id}
-                  onClick={() => setSelectedClass(classItem)}
-                  className="p-4 rounded-xl bg-[rgba(30,30,30,0.5)] hover:bg-[rgba(30,30,30,0.7)] cursor-pointer"
+                  $isSelected={selectedClass === classItem.id}
+                  onClick={() => setSelectedClass(classItem.id)}
                 >
-                  <div className="flex items-center justify-between">
+                  <ClassHeader>
                     <div>
-                      <div className="font-medium">{classItem.name}</div>
-                      <div className="text-sm text-gray-400">
-                        {classItem.time} - {classItem.instructor}
-                      </div>
+                      <ClassName>{classItem.name}</ClassName>
+                      <ClassTime>{classItem.time}</ClassTime>
                     </div>
-                    <div className="flex items-center space-x-2">
-                      <div className="text-sm text-gray-400">
-                        {classItem.enrolledStudents}/{classItem.capacity}
-                      </div>
-                      <div className={`w-2 h-2 rounded-full ${
-                        classItem.enrolledStudents >= classItem.capacity 
-                          ? 'bg-red-500' 
-                          : classItem.enrolledStudents >= classItem.capacity * 0.8
-                          ? 'bg-yellow-500'
-                          : 'bg-green-500'
-                      }`} />
-                    </div>
-                  </div>
-                </div>
+                    <ClassStatus $status={classItem.status}>
+                      {classItem.status === 'scheduled' ? 'Agendada' : 'Disponível'}
+                    </ClassStatus>
+                  </ClassHeader>
+                  <ClassDetails>
+                    <span>{classItem.instructor}</span>
+                    <span>•</span>
+                    <span>{classItem.duration}</span>
+                  </ClassDetails>
+                  {classItem.status === 'available' && (
+                    <Button variant="primary" onClick={(e) => {
+                      e.stopPropagation();
+                      handleEnrollment(classItem);
+                    }}>
+                      Matricular
+                    </Button>
+                  )}
+                </ClassCard>
               ))}
             </div>
           </Card>
