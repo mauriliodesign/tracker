@@ -3,15 +3,35 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import ClassesSchedule from './pages/ClassesSchedule/ClassesSchedule';
 import Statistics from './pages/Statistics/Statistics';
 import Profile from './pages/Profile/Profile';
+import Auth from './pages/Auth/Auth';
 
-const App = () => {
+const App: React.FC = () => {
+  // Temporariamente, vamos considerar o usuário como não autenticado
+  const isAuthenticated = false;
+
   return (
     <Router>
       <Routes>
-        <Route path="/" element={<Navigate to="/aulas" replace />} />
-        <Route path="/aulas" element={<ClassesSchedule />} />
-        <Route path="/estatisticas" element={<Statistics />} />
-        <Route path="/perfil" element={<Profile onBack={() => window.history.back()} />} />
+        <Route 
+          path="/" 
+          element={isAuthenticated ? <Navigate to="/aulas" /> : <Navigate to="/auth" />} 
+        />
+        <Route 
+          path="/auth" 
+          element={isAuthenticated ? <Navigate to="/aulas" /> : <Auth />} 
+        />
+        <Route 
+          path="/aulas" 
+          element={isAuthenticated ? <ClassesSchedule /> : <Navigate to="/auth" />} 
+        />
+        <Route 
+          path="/estatisticas" 
+          element={isAuthenticated ? <Statistics /> : <Navigate to="/auth" />} 
+        />
+        <Route 
+          path="/perfil" 
+          element={isAuthenticated ? <Profile onBack={() => window.history.back()} /> : <Navigate to="/auth" />} 
+        />
       </Routes>
     </Router>
   );

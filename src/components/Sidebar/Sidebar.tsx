@@ -117,53 +117,69 @@ const SidebarLink = styled(Link)<{ $active?: boolean; $isCollapsed?: boolean }>`
 `;
 
 const SidebarFooter = styled.div<{ $isCollapsed: boolean }>`
-  padding: 1.5rem;
+  padding: ${props => props.$isCollapsed ? '1rem 0.75rem' : '1rem 1.5rem'};
   border-top: 1px solid #222222;
-  display: ${props => props.$isCollapsed ? 'none' : 'block'};
-`;
-
-const UserInfo = styled.div`
   display: flex;
-  align-items: center;
-  gap: 1rem;
-  padding: 0.75rem;
-  border-radius: 0.5rem;
-  background-color: #1e1e1e;
-  cursor: pointer;
-  transition: all 0.2s ease-in-out;
-
-  &:hover {
-    background-color: #2d2d2d;
-  }
-
-  .user-details {
-    flex: 1;
-    
-    .name {
-      font-weight: 500;
-    }
-    
-    .belt {
-      font-size: 0.875rem;
-      color: #a3a3a3;
-    }
-  }
+  justify-content: ${props => props.$isCollapsed ? 'center' : 'flex-start'};
 `;
 
 const Avatar = styled.button`
-  width: 2.5rem;
-  height: 2.5rem;
+  width: 3rem;
+  height: 3rem;
+  min-width: 3rem;
   border-radius: 9999px;
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: 600;
+  font-size: 1rem;
   color: #ffffff;
   background-color: #2563eb;
   transition: all 0.2s ease-in-out;
+  padding: 0;
+  border: none;
 
   &:hover {
     background-color: #1d4ed8;
+  }
+`;
+
+const UserInfo = styled.div<{ $isCollapsed: boolean }>`
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: ${props => props.$isCollapsed ? '0' : '0.75rem'};
+  border-radius: 0.5rem;
+  background-color: ${props => props.$isCollapsed ? 'transparent' : '#1e1e1e'};
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  width: 100%;
+
+  &:hover {
+    background-color: ${props => props.$isCollapsed ? 'transparent' : '#2d2d2d'};
+  }
+
+  .user-details {
+    flex: 1;
+    display: ${props => props.$isCollapsed ? 'none' : 'block'};
+    min-width: 0;
+    
+    .name {
+      font-weight: 500;
+      font-size: 1rem;
+      margin-bottom: 0.125rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    
+    .belt {
+      font-size: 0.875rem;
+      color: #a3a3a3;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
   }
 `;
 
@@ -272,6 +288,7 @@ const Sidebar: React.FC<SidebarProps> = ({
 
       <SidebarFooter $isCollapsed={isCollapsed}>
         <UserInfo
+          $isCollapsed={isCollapsed}
           onClick={onProfileClick}
           role="button"
           tabIndex={0}
